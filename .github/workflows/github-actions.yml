@@ -1,0 +1,26 @@
+name: Guacamole CI
+
+on:
+  push:
+    branches-ignore:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      confirm_action:
+        description: "Type 'yes' if you want to publish and create a new tag"
+        required: true
+        default: "no"
+
+jobs:
+  # This will create docker image as well
+  java_template:
+    uses: cyberrangecz/actions-templates/.github/workflows/java_template.yml@master
+    secrets:
+      READ_PACKAGES: ${{ secrets.READ_PACKAGES }}
+    with:
+      MAVEN_CLI_OPTS: "-s etc/ci_settings.xml"
+      IMAGE_NAME: "guacamole-service"
+      VERSION_PATH: "etc/ci_settings.xml"

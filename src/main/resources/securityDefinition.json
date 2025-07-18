@@ -1,0 +1,8 @@
+{
+  "bearerAuth": {
+    "type": "apiKey",
+    "description": "Obtain bearer token from OIDC provider and enter the token in the following field. Use format 'Bearer {token}'",
+    "name": "Authorization",
+    "in": "header"
+  }
+}
