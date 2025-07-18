@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi;
+package cz.cyberrange.platform.crczpguacamoleapi.web.websocket;
 
 import lombok.NonNull;
 import org.apache.guacamole.GuacamoleException;
@@ -44,22 +44,17 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler {
         String machineIp = params.get("machineIp");
         int machinePort = Integer.parseInt(params.get("machinePort"));
 
-        // Setup Guacamole configuration
         GuacamoleConfiguration config = new GuacamoleConfiguration();
-        config.setProtocol("ssh"); // Could be "rdp" or "vnc"
+        config.setProtocol("ssh");
         config.setParameter("hostname", machineIp);
         config.setParameter("port", String.valueOf(machinePort));
-        config.setParameter("username", "user");    // Replace with actual
-        config.setParameter("password", "password"); // Replace with actual
 
-        // Establish connection to guacd
         GuacamoleSocket socket = new ConfiguredGuacamoleSocket(
                 new InetGuacamoleSocket(proxyIp, proxyPort), config);
 
         GuacamoleTunnel tunnel = new SimpleGuacamoleTunnel(socket);
         tunnels.put(session.getId(), tunnel);
 
-        // Start reading from guacd and pushing to client
         executor.submit(() -> {
             try {
                 GuacamoleReader reader = tunnel.acquireReader();
