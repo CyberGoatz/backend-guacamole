@@ -1,9 +1,9 @@
-package cz.cyberrange.platform.crczpguacamoleapi.config;
+package cz.cyberrange.platform.guacamole.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import cz.cyberrange.platform.crczpguacamoleapi.errors.CustomWebClientException;
-import cz.cyberrange.platform.crczpguacamoleapi.errors.JavaApiError;
-import cz.cyberrange.platform.crczpguacamoleapi.errors.PythonApiError;
+import cz.cyberrange.platform.guacamole.errors.CustomWebClientException;
+import cz.cyberrange.platform.guacamole.errors.JavaApiError;
+import cz.cyberrange.platform.guacamole.errors.PythonApiError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

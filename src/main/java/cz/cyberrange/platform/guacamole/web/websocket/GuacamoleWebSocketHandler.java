@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi.web.websocket;
+package cz.cyberrange.platform.guacamole.web.websocket;
 
 import lombok.NonNull;
 import org.apache.guacamole.GuacamoleException;

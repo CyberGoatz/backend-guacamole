@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi.errors;
+package cz.cyberrange.platform.guacamole.errors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

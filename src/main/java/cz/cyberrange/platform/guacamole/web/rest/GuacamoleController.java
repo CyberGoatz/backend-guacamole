@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi.web.rest;
+package cz.cyberrange.platform.guacamole.web.rest;
 
 import org.apache.guacamole.net.GuacamoleSocket;
 import org.apache.guacamole.net.GuacamoleTunnel;

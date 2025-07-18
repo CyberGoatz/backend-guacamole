@@ -1,6 +1,6 @@
-package cz.cyberrange.platform.crczpguacamoleapi;
+package cz.cyberrange.platform.guacamole;
 
-import cz.cyberrange.platform.crczpguacamoleapi.config.ServiceConfiguration;
+import cz.cyberrange.platform.guacamole.config.ServiceConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;

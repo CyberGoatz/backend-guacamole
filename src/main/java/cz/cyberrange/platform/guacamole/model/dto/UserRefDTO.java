@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi.model.dto;
+package cz.cyberrange.platform.guacamole.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;

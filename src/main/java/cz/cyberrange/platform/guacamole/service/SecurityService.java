@@ -1,7 +1,7 @@
-package cz.cyberrange.platform.crczpguacamoleapi.service;
+package cz.cyberrange.platform.guacamole.service;
 
-import cz.cyberrange.platform.crczpguacamoleapi.errors.CustomWebClientException;
-import cz.cyberrange.platform.crczpguacamoleapi.model.dto.UserRefDTO;
+import cz.cyberrange.platform.guacamole.errors.CustomWebClientException;
+import cz.cyberrange.platform.guacamole.model.dto.UserRefDTO;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;

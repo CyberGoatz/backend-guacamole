@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi.config;
+package cz.cyberrange.platform.guacamole.config;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;

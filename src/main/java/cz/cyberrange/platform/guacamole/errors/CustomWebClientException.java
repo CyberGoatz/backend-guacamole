@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi.errors;
+package cz.cyberrange.platform.guacamole.errors;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatusCode;

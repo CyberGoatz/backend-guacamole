@@ -14,8 +14,8 @@
     <artifactId>crczp-guacamole-api</artifactId>
     <version>1.0.0</version>
 
-    <name>crczp-guacamole-api</name>
-    <description>crczp-guacamole-api</description>
+    <name>guacamole-service</name>
+    <description>This service allows the creation of websockets to Guacd and provides additional QoL features</description>
 
     <repositories>
         <repository>

@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi;
+package cz.cyberrange.platform.guacamole;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

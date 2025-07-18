@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi.config;
+package cz.cyberrange.platform.guacamole.config;
 
 
 import cz.cyberrange.platform.commons.startup.config.MicroserviceRegistrationConfiguration;

@@ -1,4 +1,4 @@
-package cz.cyberrange.platform.crczpguacamoleapi.web.websocket.interceptor;
+package cz.cyberrange.platform.guacamole.web.websocket.interceptor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
