@@ -5,14 +5,13 @@ FROM maven:3.9.4-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 
 ARG PROJECT_ARTIFACT_ID
-ARG GITHUB_ACTOR=REGISTRY-USER
-ARG READ_PACKAGES_TOKEN=REGISTRY-TOKEN
+ARG MAVEN_CLI_OPTS=EXTRA-OPTIONS
 
 COPY pom.xml /app/pom.xml
 COPY src /app/src
 
 # Build JAR file
-RUN mvn clean install -DskipTests && \
+RUN mvn -ntp clean install -DskipTests -DskipChecks=true $MAVEN_CLI_OPTS && \
     cp /app/target/$PROJECT_ARTIFACT_ID-*.jar /app/$PROJECT_ARTIFACT_ID.jar
 
 ############ RUNNABLE STAGE ############

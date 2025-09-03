@@ -18,6 +18,8 @@ jobs:
   # This will create docker image as well
   java_template:
     uses: cyberrangecz/actions-templates/.github/workflows/java_template.yml@master
+    secrets:
+      NVD_API: ${{ secrets.NVD_API }}
     with:
       MAVEN_CLI_OPTS: ""
       IMAGE_NAME: "guacamole-service"
