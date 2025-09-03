@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cyberrange.platform.guacamole.errors.CustomWebClientException;
 import cz.cyberrange.platform.guacamole.errors.JavaApiError;
 import cz.cyberrange.platform.guacamole.errors.PythonApiError;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +22,6 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-
 /**
  * The type Web client config.
  */
@@ -31,14 +30,13 @@ import java.io.IOException;
 public class WebClientConfiguration {
 
 
+        private final ObjectMapper objectMapper;
         @Value("${sandbox-service.uri}")
         private String openStackURI;
-        @Value("${user-and-group-server.uri}")
+        @Value("${user-and-group-service.uri}")
         private String userAndGroupURI;
         @Value("${elasticsearch-service.uri}")
         private String elasticsearchServiceURI;
-
-        private final ObjectMapper objectMapper;
 
         @Autowired
         public WebClientConfiguration(ObjectMapper objectMapper) {
