@@ -13,7 +13,7 @@ COPY src /app/src
 
 # Build JAR file
 RUN mvn -ntp clean install -DskipTests -DskipChecks=true $MAVEN_CLI_OPTS && \
-    cp /app/target/guacamole-service-*.jar /app/guacamole-service.jar
+    cp /app/target/guacamole-service-*.jar /app/$PROJECT_ARTIFACT_ID.jar
 
 ############ RUNNABLE STAGE ############
 FROM eclipse-temurin:21-jre-noble AS runnable
@@ -24,9 +24,9 @@ ARG PROJECT_ARTIFACT_ID
 
 ENV PROJECT_ARTIFACT_ID=${PROJECT_ARTIFACT_ID}
 
-COPY etc/guacamole-service.properties /app/etc/guacamole-service.properties
+COPY etc/guacamole-service.properties /app/etc/$PROJECT_ARTIFACT_ID.properties
 COPY entrypoint.sh /app/entrypoint.sh
-COPY --from=build /app/guacamole-service.jar ./
+COPY --from=build /app/$PROJECT_ARTIFACT_ID.jar ./
 
 RUN apt-get update && \
     # Required to use nc command in the wait for it function, see entrypoint.sh

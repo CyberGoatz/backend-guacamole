@@ -3,16 +3,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>cz.cyberrange.platform</groupId>
+    <artifactId>guacamole-service</artifactId>
+    <version>0.0.1</version>
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-
-    <groupId>cz.cyberrange.platform</groupId>
-    <artifactId>guacamole-service</artifactId>
-    <version>0.0.2</version>
 
     <name>guacamole-service</name>
     <description>This service allows the creation of websockets to Guacd and provides additional QoL features
