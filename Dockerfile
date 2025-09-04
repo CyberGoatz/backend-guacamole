@@ -1,4 +1,4 @@
-ARG PROJECT_ARTIFACT_ID=guacamole-service
+ARG PROJECT_ARTIFACT_ID=guacamole
 
 ############ BUILD STAGE ############
 FROM maven:3.9.4-eclipse-temurin-21-alpine AS build
