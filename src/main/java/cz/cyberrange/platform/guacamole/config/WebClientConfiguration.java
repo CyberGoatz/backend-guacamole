@@ -5,8 +5,6 @@ import cz.cyberrange.platform.guacamole.errors.CustomWebClientException;
 import cz.cyberrange.platform.guacamole.errors.JavaApiError;
 import cz.cyberrange.platform.guacamole.errors.PythonApiError;
 import java.io.IOException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,152 +20,167 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-/**
- * The type Web client config.
- */
+/** The type Web client config. */
 @Import(ObjectMapperConfiguration.class)
 @Configuration
 public class WebClientConfiguration {
 
+  private final ObjectMapper objectMapper;
 
-        private final ObjectMapper objectMapper;
-        @Value("${sandbox-service.uri}")
-        private String openStackURI;
-        @Value("${user-and-group-service.uri}")
-        private String userAndGroupURI;
-        @Value("${elasticsearch-service.uri}")
-        private String elasticsearchServiceURI;
+  @Value("${sandbox-service.uri}")
+  private String openStackURI;
 
-        @Autowired
-        public WebClientConfiguration(ObjectMapper objectMapper) {
-            this.objectMapper = objectMapper;
-        }
+  @Value("${user-and-group-server.uri}")
+  private String userAndGroupURI;
 
-        /**
-         * Openstack service web client web client.
-         *
-         * @return the web client
-         */
-        @Bean
-        @Qualifier("sandboxServiceWebClient")
-        public WebClient sandboxServiceWebClient() {
-            return WebClient.builder()
-                    .baseUrl(openStackURI)
-                    .defaultHeaders(headers -> {
-                        headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
-                        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-                    })
-                    .filters(exchangeFilterFunctions -> {
-                        exchangeFilterFunctions.add(addSecurityHeader());
-                        exchangeFilterFunctions.add(openStackSandboxServiceExceptionHandlingFunction());
-                    })
-                    .build();
-        }
+  @Value("${elasticsearch-service.uri}")
+  private String elasticsearchServiceURI;
 
-        /**
-         * User management service web client web client.
-         *
-         * @return the web client
-         */
-        @Bean
-        @Qualifier("userManagementServiceWebClient")
-        public WebClient userManagementServiceWebClient() {
-            return WebClient.builder()
-                    .baseUrl(userAndGroupURI)
-                    .defaultHeaders(headers -> {
-                        headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
-                        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-                    })
-                    .filters(exchangeFilterFunctions -> {
-                        exchangeFilterFunctions.add(addSecurityHeader());
-                        exchangeFilterFunctions.add(javaMicroserviceExceptionHandlingFunction());
-                    })
-                    .build();
-        }
+  public WebClientConfiguration(ObjectMapper objectMapper) {
+    this.objectMapper = objectMapper;
+  }
 
-        /**
-         * Elasticsearch service web client.
-         *
-         * @return the web client
-         */
-        @Bean
-        @Qualifier("elasticsearchServiceWebClient")
-        public WebClient elasticsearchServiceWebClient() {
-            return WebClient.builder()
-                    .baseUrl(elasticsearchServiceURI)
-                    .defaultHeaders(headers -> {
-                        headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
-                        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-                    })
-                    .filters(exchangeFilterFunctions -> {
-                        exchangeFilterFunctions.add(addSecurityHeader());
-                        exchangeFilterFunctions.add(javaMicroserviceExceptionHandlingFunction());
-                    })
-                    .exchangeStrategies(ExchangeStrategies.builder()
-                            .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
-                            .build())
-                    .build();
-        }
+  /**
+   * Openstack service web client.
+   *
+   * @return the web client
+   */
+  @Bean
+  public WebClient sandboxServiceWebClient() {
+    return WebClient.builder()
+        .baseUrl(openStackURI)
+        .defaultHeaders(
+            headers -> {
+              headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+              headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+            })
+        .filters(
+            exchangeFilterFunctions -> {
+              exchangeFilterFunctions.add(addSecurityHeader());
+              exchangeFilterFunctions.add(openStackSandboxServiceExceptionHandlingFunction());
+            })
+        .build();
+  }
 
-        private ExchangeFilterFunction addSecurityHeader() {
-            return (request, next) -> {
-                JwtAuthenticationToken jwtAuthentication = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-                Jwt jwtToken = jwtAuthentication.getToken();
-                ClientRequest filtered = ClientRequest.from(request)
-                        .header("Authorization", "Bearer " + jwtToken.getTokenValue())
-                        .build();
-                return next.exchange(filtered);
-            };
-        }
+  /**
+   * User management service web client web client.
+   *
+   * @return the web client
+   */
+  @Bean
+  public WebClient userManagementServiceWebClient() {
+    return WebClient.builder()
+        .baseUrl(userAndGroupURI)
+        .defaultHeaders(
+            headers -> {
+              headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+              headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+            })
+        .filters(
+            exchangeFilterFunctions -> {
+              exchangeFilterFunctions.add(addSecurityHeader());
+              exchangeFilterFunctions.add(javaMicroserviceExceptionHandlingFunction());
+            })
+        .build();
+  }
 
-        private ExchangeFilterFunction openStackSandboxServiceExceptionHandlingFunction() {
-            return ExchangeFilterFunction.ofResponseProcessor(clientResponse -> {
-                if(clientResponse.statusCode().is4xxClientError() || clientResponse.statusCode().is5xxServerError()) {
-                    return clientResponse.bodyToMono(String.class)
-                            .flatMap(errorBody -> {
-                                PythonApiError pythonApiError = obtainSuitablePythonApiError(errorBody);
-                                return Mono.error(new CustomWebClientException(clientResponse.statusCode(), pythonApiError));
+  /**
+   * Elasticsearch service web client.
+   *
+   * @return the web client
+   */
+  @Bean
+  public WebClient elasticsearchServiceWebClient() {
+    return WebClient.builder()
+        .baseUrl(elasticsearchServiceURI)
+        .defaultHeaders(
+            headers -> {
+              headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+              headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+            })
+        .filters(
+            exchangeFilterFunctions -> {
+              exchangeFilterFunctions.add(addSecurityHeader());
+              exchangeFilterFunctions.add(javaMicroserviceExceptionHandlingFunction());
+            })
+        .exchangeStrategies(
+            ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
+                .build())
+        .build();
+  }
 
-                            });
-                } else {
-                    return Mono.just(clientResponse);
-                }
-            });
-        }
+  private ExchangeFilterFunction addSecurityHeader() {
+    return (request, next) -> {
+      JwtAuthenticationToken jwtAuthentication =
+          (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+      Jwt jwtToken = jwtAuthentication.getToken();
+      ClientRequest filtered =
+          ClientRequest.from(request)
+              .header("Authorization", "Bearer " + jwtToken.getTokenValue())
+              .build();
+      return next.exchange(filtered);
+    };
+  }
 
-        private PythonApiError obtainSuitablePythonApiError(String errorBody) {
-            if (errorBody == null || errorBody.isBlank()) {
-                return PythonApiError.of("No specific detail provided.");
-            }
-            try {
-                return objectMapper.readValue(errorBody, PythonApiError.class);
-            } catch (IOException e) {
-                return PythonApiError.of("Could not obtain error detail. Error body is: " + errorBody);
-            }
-        }
+  private ExchangeFilterFunction openStackSandboxServiceExceptionHandlingFunction() {
+    return ExchangeFilterFunction.ofResponseProcessor(
+        clientResponse -> {
+          if (clientResponse.statusCode().is4xxClientError()
+              || clientResponse.statusCode().is5xxServerError()) {
+            return clientResponse
+                .bodyToMono(String.class)
+                .flatMap(
+                    errorBody -> {
+                      PythonApiError pythonApiError = obtainSuitablePythonApiError(errorBody);
+                      return Mono.error(
+                          new CustomWebClientException(
+                              clientResponse.statusCode(), pythonApiError));
+                    });
+          } else {
+            return Mono.just(clientResponse);
+          }
+        });
+  }
 
-        private ExchangeFilterFunction javaMicroserviceExceptionHandlingFunction() {
-            return ExchangeFilterFunction.ofResponseProcessor(clientResponse -> {
-                if(clientResponse.statusCode().is4xxClientError() || clientResponse.statusCode().is5xxServerError()) {
-                    return clientResponse.bodyToMono(String.class)
-                            .flatMap(errorBody -> {
-                                JavaApiError javaApiError = obtainSuitableJavaApiError(errorBody);
-                                return Mono.error(new CustomWebClientException(clientResponse.statusCode(), javaApiError));
-                            });
-                } else {
-                    return Mono.just(clientResponse);
-                }
-            });
-        }
-
-        private JavaApiError obtainSuitableJavaApiError(String errorBody) {
-            if (errorBody == null || errorBody.isBlank()) {
-                return JavaApiError.of("No specific message provided.");
-            }
-            try {
-                return objectMapper.readValue(errorBody, JavaApiError.class);
-            } catch (IOException e) {
-                return JavaApiError.of("Could not obtain error message. Error body is: " + errorBody);
-            }
-        }
+  private PythonApiError obtainSuitablePythonApiError(String errorBody) {
+    if (errorBody == null || errorBody.isBlank()) {
+      return PythonApiError.of("No specific detail provided.");
     }
+    try {
+      return objectMapper.readValue(errorBody, PythonApiError.class);
+    } catch (IOException e) {
+      return PythonApiError.of("Could not obtain error detail. Error body is: " + errorBody);
+    }
+  }
+
+  private ExchangeFilterFunction javaMicroserviceExceptionHandlingFunction() {
+    return ExchangeFilterFunction.ofResponseProcessor(
+        clientResponse -> {
+          if (clientResponse.statusCode().is4xxClientError()
+              || clientResponse.statusCode().is5xxServerError()) {
+            return clientResponse
+                .bodyToMono(String.class)
+                .flatMap(
+                    errorBody -> {
+                      JavaApiError javaApiError = obtainSuitableJavaApiError(errorBody);
+                      return Mono.error(
+                          new CustomWebClientException(clientResponse.statusCode(), javaApiError));
+                    });
+          } else {
+            return Mono.just(clientResponse);
+          }
+        });
+  }
+
+  private JavaApiError obtainSuitableJavaApiError(String errorBody) {
+    if (errorBody == null || errorBody.isBlank()) {
+      return JavaApiError.of("No specific message provided.");
+    }
+    try {
+      return objectMapper.readValue(errorBody, JavaApiError.class);
+    } catch (IOException e) {
+      return JavaApiError.of("Could not obtain error message. Error body is: " + errorBody);
+    }
+  }
+}

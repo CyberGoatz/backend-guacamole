@@ -1,25 +1,24 @@
 package cz.cyberrange.platform.guacamole.web.rest;
 
-import org.apache.guacamole.net.GuacamoleSocket;
-import org.apache.guacamole.net.GuacamoleTunnel;
-import org.apache.guacamole.net.InetGuacamoleSocket;
-import org.apache.guacamole.net.SimpleGuacamoleTunnel;
-import org.apache.guacamole.protocol.ConfiguredGuacamoleSocket;
-import org.apache.guacamole.protocol.GuacamoleConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
+import cz.cyberrange.platform.guacamole.web.facade.GuacamoleControllerFacade;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.guacamole.GuacamoleException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/guacamole")
 public class GuacamoleController {
 
-  private static final Logger logger = LoggerFactory.getLogger(GuacamoleController.class);
+  private final GuacamoleControllerFacade guacamoleControllerFacade;
+
+  public GuacamoleController(GuacamoleControllerFacade guacamoleControllerFacade) {
+    this.guacamoleControllerFacade = guacamoleControllerFacade;
+  }
 
   @GetMapping("/connect")
   public ResponseEntity<String> connect(
@@ -29,22 +28,16 @@ public class GuacamoleController {
       @RequestParam int machinePort) {
 
     try {
-      GuacamoleConfiguration config = new GuacamoleConfiguration();
-      config.setProtocol("ssh");
-      config.setParameter("hostname", machineIp);
-      config.setParameter("port", String.valueOf(machinePort));
-
-      GuacamoleSocket socket =
-          new ConfiguredGuacamoleSocket(new InetGuacamoleSocket(proxyIp, proxyPort), config);
-
-      GuacamoleTunnel tunnel = new SimpleGuacamoleTunnel(socket);
-
-      return ResponseEntity.ok(tunnel.getUUID().toString());
-
-    } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Connection failed: " + e.getMessage());
+      return ResponseEntity.ok(
+          guacamoleControllerFacade.connectToGuacd(proxyIp, proxyPort, machineIp, machinePort));
+    } catch (GuacamoleException e) {
+      log.error(e.toString());
+      return ResponseEntity.internalServerError().body(e.toString());
     }
+  }
+
+  @GetMapping("/test")
+  public ResponseEntity<String> test() {
+    return ResponseEntity.ok("All good");
   }
 }
