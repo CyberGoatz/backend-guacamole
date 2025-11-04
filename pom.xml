@@ -97,7 +97,7 @@
 
         <dependency>
             <groupId>cz.cybersecurityhub.maven</groupId>
-            <artifactId>security-commons</artifactId>
+            <artifactId>crczp-security-commons</artifactId>
             <version>${security-commons.version}</version>
         </dependency>
 
