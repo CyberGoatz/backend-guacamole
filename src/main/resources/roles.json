@@ -1,0 +1,12 @@
+[
+  {
+    "role_type": "ROLE_GUACAMOLE_TRAINEE",
+    "default": true,
+    "description": "This role will allow you to create guacamole connections."
+  },
+  {
+    "role_type": "ROLE_GUACAMOLE_ORGANISER",
+    "default": false,
+    "description": "This role will allow you to view and manage guacamole connections of Trainees"
+  }
+]

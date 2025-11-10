@@ -9,8 +9,7 @@ import org.springframework.context.annotation.Import;
 @Import({ServiceConfiguration.class})
 public class CrczpGuacamoleApiApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(CrczpGuacamoleApiApplication.class, args);
-    }
-
+  public static void main(String[] args) {
+    SpringApplication.run(CrczpGuacamoleApiApplication.class, args);
+  }
 }
