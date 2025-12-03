@@ -43,7 +43,9 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler implements S
   private static final String PARAM_WITH_GUI = "withGui";
   private static final String PARAM_WIDTH = "width";
   private static final String PARAM_HEIGHT = "height";
+
   private final ConcurrentMap<String, GuacamoleTunnel> tunnels = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Object> sessionLocks = new ConcurrentHashMap<>();
   private final GuacamoleTunnelService guacamoleTunnelService;
 
   /** Instantiates a new Guacamole web socket handler. */
@@ -57,20 +59,6 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler implements S
       throw new GuacamoleException("Missing required parameter: " + key);
     }
     return value;
-  }
-
-  /** Sends a Guacamole instruction to the WebSocket client. */
-  private static void sendInstruction(WebSocketSession session, GuacamoleInstruction instruction)
-      throws IOException {
-    sendInstruction(session, instruction.toString());
-  }
-
-  /** Sends a Guacamole instruction string to the WebSocket client. */
-  private static void sendInstruction(WebSocketSession session, String instruction)
-      throws IOException {
-    if (session.isOpen()) {
-      session.sendMessage(new TextMessage(instruction));
-    }
   }
 
   /** Closes the WebSocket connection with the given Guacamole status. */
@@ -93,11 +81,53 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler implements S
     }
   }
 
+  private static Map<String, String> extractParams(URI uri) {
+    Map<String, String> queryPairs = new HashMap<>();
+    if (uri == null) return queryPairs;
+
+    String query = uri.getQuery();
+    if (query == null) return queryPairs;
+
+    Arrays.stream(query.split("&"))
+        .forEach(
+            pair -> {
+              String[] parts = pair.split("=");
+              if (parts.length == 2) {
+                queryPairs.put(
+                    URLDecoder.decode(parts[0], StandardCharsets.UTF_8),
+                    URLDecoder.decode(parts[1], StandardCharsets.UTF_8));
+              }
+            });
+
+    return queryPairs;
+  }
+
+  /** Sends a Guacamole instruction to the WebSocket client. Method is tread safe. */
+  private void sendInstruction(WebSocketSession session, GuacamoleInstruction instruction)
+      throws IOException {
+    sendInstruction(session, instruction.toString());
+  }
+
+  /** Sends a Guacamole instruction string to the WebSocket client. Method is tread safe. */
+  private void sendInstruction(WebSocketSession session, String instruction) throws IOException {
+    Object lock = sessionLocks.get(session.getId());
+    if (lock == null) {
+      log.warn("No lock found for session: {}", session.getId());
+      return;
+    }
+
+    synchronized (lock) {
+      if (session.isOpen()) {
+        session.sendMessage(new TextMessage(instruction));
+      }
+    }
+  }
+
   /**
    * Starts a thread that continuously reads from the Guacamole tunnel and sends instructions to the
    * WebSocket client.
    */
-  private static void startReadThread(WebSocketSession session, GuacamoleTunnel tunnel) {
+  private void startReadThread(WebSocketSession session, GuacamoleTunnel tunnel) {
 
     Thread readThread =
         new Thread(
@@ -141,7 +171,7 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler implements S
 
               } catch (IOException e) {
                 log.debug("I/O error prevents further reads.", e);
-                GuacamoleWebSocketHandler.closeConnection(session, GuacamoleStatus.SERVER_ERROR);
+                closeConnection(session, GuacamoleStatus.SERVER_ERROR);
               }
             },
             "guacamole-reader-" + session.getId());
@@ -150,44 +180,26 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler implements S
     readThread.start();
   }
 
-  private static Map<String, String> extractParams(URI uri) {
-    Map<String, String> queryPairs = new HashMap<>();
-    if (uri == null) return queryPairs;
-
-    String query = uri.getQuery();
-    if (query == null) return queryPairs;
-
-    Arrays.stream(query.split("&"))
-        .forEach(
-            pair -> {
-              String[] parts = pair.split("=");
-              if (parts.length == 2) {
-                queryPairs.put(
-                    URLDecoder.decode(parts[0], StandardCharsets.UTF_8),
-                    URLDecoder.decode(parts[1], StandardCharsets.UTF_8));
-              }
-            });
-
-    return queryPairs;
-  }
-
   @Override
   public void afterConnectionEstablished(@NonNull WebSocketSession session)
       throws GuacamoleException {
 
-    // Get authentication from session attributes (set by interceptor)
+    // Create lock for session synchronization
+    sessionLocks.put(session.getId(), new Object());
+
     Authentication authentication =
         (Authentication) session.getAttributes().get(StringConstants.AUTHENTICATION_ATTRIBUTE_KEY);
 
     if (authentication == null) {
       log.error("No authentication found in session attributes");
-      GuacamoleWebSocketHandler.closeConnection(session, GuacamoleStatus.CLIENT_UNAUTHORIZED);
+      sessionLocks.remove(session.getId());
+      closeConnection(session, GuacamoleStatus.CLIENT_UNAUTHORIZED);
       return;
     }
 
     SecurityContextHolder.getContext().setAuthentication(authentication);
 
-    Map<String, String> params = GuacamoleWebSocketHandler.extractParams(session.getUri());
+    Map<String, String> params = extractParams(session.getUri());
 
     String sandboxId = getOrThrow(params, PARAM_SANDBOX_UUID);
 
@@ -217,6 +229,7 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler implements S
 
       if (tunnel == null) {
         log.error("Failed to create tunnel - returned null");
+        sessionLocks.remove(session.getId());
         closeConnection(session, GuacamoleStatus.RESOURCE_NOT_FOUND);
         return;
       }
@@ -228,6 +241,7 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler implements S
     } catch (GuacamoleException e) {
       log.error("Creation of WebSocket tunnel to guacd failed: {}", e.getMessage());
       log.debug("Error connecting WebSocket tunnel.", e);
+      sessionLocks.remove(session.getId());
       closeConnection(session, e.getStatus());
     }
   }
@@ -295,6 +309,7 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler implements S
     log.info("WebSocket closed - Session: {}, Status: {}", session.getId(), status);
 
     GuacamoleTunnel tunnel = tunnels.remove(session.getId());
+    sessionLocks.remove(session.getId());
 
     if (tunnel != null) {
       try {
@@ -310,7 +325,7 @@ public class GuacamoleWebSocketHandler extends TextWebSocketHandler implements S
       @NonNull WebSocketSession session, @NonNull Throwable exception) {
 
     log.error("WebSocket transport error - Session: {}", session.getId(), exception);
-    GuacamoleWebSocketHandler.closeConnection(session, GuacamoleStatus.SERVER_ERROR);
+    closeConnection(session, GuacamoleStatus.SERVER_ERROR);
   }
 
   @Override
