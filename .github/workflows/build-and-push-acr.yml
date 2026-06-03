@@ -1,0 +1,27 @@
+name: Build and push Docker image to ACR
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acr:
+    uses: CyberGoatz/github-workflows/.github/workflows/acr-build-push.yml@main
+    with:
+      acr_login_server: ${{ vars.ACR_LOGIN_SERVER }}
+      image_name: guacamole-service
+      build_type: java
+      java_version: "21"
+      maven_cli_opts: "-DskipChecks=true"
+      build_args: |
+        MAVEN_CLI_OPTS=-DskipChecks=true
+    secrets: inherit
