@@ -1,7 +1,7 @@
 [
   {
     "role_type": "ROLE_GUACAMOLE_TRAINEE",
-    "default": true,
+    "default": false,
     "description": "This role will allow you to create guacamole connections."
   },
   {
