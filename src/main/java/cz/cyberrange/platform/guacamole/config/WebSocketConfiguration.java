@@ -1,9 +1,12 @@
 package cz.cyberrange.platform.guacamole.config;
 
-import cz.cyberrange.platform.commons.security.config.WebsocketTokenValidationInterceptor;
 import cz.cyberrange.platform.commons.security.impl.UserInfoAuthenticationProvider;
+import cz.cyberrange.platform.guacamole.service.ConsoleTicketService;
 import cz.cyberrange.platform.guacamole.service.GuacamoleTunnelService;
+import cz.cyberrange.platform.guacamole.web.websocket.GuacamoleTicketHandshakeInterceptor;
 import cz.cyberrange.platform.guacamole.web.websocket.GuacamoleWebSocketHandler;
+import java.util.Arrays;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
@@ -18,13 +21,24 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 public class WebSocketConfiguration implements WebSocketConfigurer {
 
   private final UserInfoAuthenticationProvider userInfoAuthenticationProvider;
+  private final ConsoleTicketService consoleTicketService;
   private final GuacamoleTunnelService guacamoleTunnelService;
+  private final String[] allowedOrigins;
 
   public WebSocketConfiguration(
       UserInfoAuthenticationProvider userInfoAuthenticationProvider,
-      GuacamoleTunnelService guacamoleTunnelService) {
+      ConsoleTicketService consoleTicketService,
+      GuacamoleTunnelService guacamoleTunnelService,
+      @Value("${guacamole.websocket.allowed-origins:${cors.allowed.origins:*}}")
+          String allowedOrigins) {
     this.userInfoAuthenticationProvider = userInfoAuthenticationProvider;
+    this.consoleTicketService = consoleTicketService;
     this.guacamoleTunnelService = guacamoleTunnelService;
+    this.allowedOrigins =
+        Arrays.stream(allowedOrigins.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isBlank())
+            .toArray(String[]::new);
   }
 
   @Bean
@@ -44,7 +58,9 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
   public void registerWebSocketHandlers(@NonNull WebSocketHandlerRegistry registry) {
     registry
         .addHandler(guacamoleWebSocketHandler(), "/websocket/guacamole")
-        .addInterceptors(new WebsocketTokenValidationInterceptor(userInfoAuthenticationProvider))
-        .setAllowedOrigins("*");
+        .addInterceptors(
+            new GuacamoleTicketHandshakeInterceptor(
+                consoleTicketService, userInfoAuthenticationProvider))
+        .setAllowedOrigins(allowedOrigins);
   }
 }
